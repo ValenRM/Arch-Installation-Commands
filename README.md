@@ -15,4 +15,7 @@
 
  | Command | Description |
  | --- | --- |
- | device list | List all Wi-Fi devices
+ | device list | List all Wi-Fi devices |
+ | station **<device>** scan | Initiate a scan for networks (*No output will be displayed*) |
+ | station **<device>** get-networks | List all available Wi-Fi networks |
+ | station **<device>** connect SSID | Connect to a network |
