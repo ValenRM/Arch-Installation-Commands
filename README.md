@@ -11,7 +11,8 @@
  # Establishing an internet connection
  If you are connected via Ethernet, make sure that you can ping external sevices such as **google.com**. If you are using Wi-Fi, you are going to use [**iwd**](https://wiki.archlinux.org/title/iwd).
 
- - Get into an iteractive prompt using `iwctl`. The interactive prompt will be displayed with a prefix of `[iwd]#`
+ - Get into an iteractive prompt using `iwctl`. The interactive prompt will be displayed with a prefix of `[iwd]#`.
 
  | Command | Description |
+ | --- | --- |
  | device list | List all Wi-Fi devices
