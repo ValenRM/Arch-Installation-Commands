@@ -175,11 +175,104 @@ mkfs.ext4 /dev/<ROOT_PARTITION>
  locale-gen
  ```
 
- After the locale has been generated, we need to edit the `locale.conf` file located in `/etc/locale.conf`. Here we are going to copy the exact same local we've uncommented earlier. Keep in mind that this file specifies the system-wide locale settings. For this example, I'm going to add `LANG=en_US.UTF-8` to the `locale.conf` file.
+ After the locale has been generated, we need to edit the `locale.conf` file located in `/etc/locale.conf`. Here we are going to copy the exact same local we've uncommented earlier. Keep in mind that this file specifies the system-wide locale settings, which determines the language and cultural preferences used by system services and applications. For this example, I'm going to add `LANG=en_US.UTF-8` to the `locale.conf` file.
 
  ```
  echo "LANG=en_US.UTF-8" > /etc/locale.conf
  ```
 
  ## Network Configuration
+ ### Hostname
+ To define our hostname, we just need to type the desired name into `/etc/hostname`.
 
+ ```
+ echo "<HOSTNAME>" > /etc/hostname
+ ```
+ ### Loopback  Configuration
+ To configure the loopback interface, we need to add the following lines to the `/etc/hosts` file:
+ 
+ ```
+ nvim /etc/hosts
+
+    127.0.0.1	localhost
+	::1			localhost
+	127.0.1.1	<HOSTNAME>.localhost	<HOSTNAME>
+ ```
+ 
+ ## User Configuration
+ To create a new user account (our account), we will use the `useradd` command followed by the username:
+ - NOTE: The `-m` option is crucial, because we need to create a home directory for the user.
+ ```
+ useradd -m <USERNAME>
+ ```
+
+ After your user has been created, create a strong password and assign it to that user using:
+ ```
+ passwd <USERNAME>
+ ```
+
+A password should be configured for the root user.
+```
+passwd <ROOT_PASSWORD>
+```
+
+## User Groups & Sudo
+ Add your user to `wheel`, `audio`, `video`, `optical`, and `storage` groups:
+ ```
+ usermod -aG wheel,audio,video,optical,storage <USERNAME>
+ ```
+
+ ## Installing Sudo
+ ```
+ pacman -S sudo
+ ```
+
+ ## Configuring Sudo
+ `%wheel ALL=(ALL) ALL` Should be uncommented from the Sudo configuration file. By doing so, all users who have been added to the `wheel` group will be granted the ability to execute any command.
+ ```
+ EDITOR=nvim visudo
+ ```
+
+ ## Grub Installation & Configuration
+ To install grub, we should run the following command:
+ ```
+ pacman -S grub efibootmgr dosfstools os-prober mtools networkmanager wpa_supplicant base-devel
+ ```
+ 
+ After grub has been successfully installed, we need to run the `grub-install` command. Under the `--bootloader-id` flag, you should enter the name you want to be displayed on your computer's boot manager.
+ ```
+ grub-install --target=x86_64-efi --efi-directory=<efi-directory-path> --bootloader-id=<any name you like> --recheck
+ ```
+
+ - NOTE: Add the `--removable` flag before the `--recheck` flag if you are installing Arch Linux on a removable drive, such as an USB stick.
+
+ To generate the configuration file for GRUB, we need to use the `grub-mkconfig` command. This command scans the system and generates a new configuration file, which is saved to the file `/boot/grub/grub.cfg`.
+ ```
+ grub-mkconfig -o /boot/grub/grub.cfg
+ ```
+
+ ## Final Configuration
+ Enable `NetworkManager` and `wpa_supplicant.service` using the `systemctl` command:
+ ```
+ systemctl enable NetworkManager
+
+ systemctl enable wpa_supplicant.service
+ ```
+
+ Synchronize time using `timedatectl`:
+ ```
+ timedatectl set-ntp true
+ ```
+
+ ## Exiting Chroot Enviroment
+ ```
+ exit
+ ```
+
+ # Finishing Installation
+ To finish up the installation of Arch Linux, we need to unomunt all the partitions that were previously mounted to `/mnt`. The `-R` option stands for recursive operation. 
+ ```
+ umount -R /mnt
+ ```
+
+ Reboot the system using the `reboot` command, or `shutdown` command. Make sure to remove the installation media before booting.
