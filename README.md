@@ -90,18 +90,96 @@
  We will format all three partitions.
  ### Formatting EFI Partition
  ```
- mkfs.fat -F 32 /dev/<efi-partition>
+ mkfs.fat -F 32 /dev/<EFI_PARTITION>
  ```
 
  ### Formatting Swap Partition
  ```
- mkswap /dev/<swap-partition>
+ mkswap /dev/<SWAP_PARTITION>
 
- swapon /dev/<swap-partition>
+ swapon /dev/<SWAP_PARTITION>
  ```
 ### Formatting Root Partition
 ```
-mkfs.ext4 /dev/<root-partition>
+mkfs.ext4 /dev/<ROOT_PARTITION>
 ```
 
 # Mounting the File System
+ The Root partition should be mounted to the `/mnt` directory. To do so we can use this command:
+ ```
+ mount /dev/<ROOT_PARTITION> /mnt
+ ```
+
+ Finally, to mount the EFI partition, we first need to create the `/mnt/boot` directory using the `mkdir` command. Then, we can use the `mount` command to attach the EFI partition to this directory by specifying the partition's device file and the mount point, which is `/mnt/boot` in this case.
+ ```
+ mkdir /mnt/boot
+
+ mount /dev/<EFI_PARTITION> /mnt/boot
+ ```
+
+ # Installing Linux Kernel
+ By running `pacstrap` and specifying the target installation directory *(in our case, /mnt)*, we can install the necessary packages and dependencies for the kernel to function properly.
+ ```
+ pacstrap -K /mnt base linux linux-firmware
+ ```
+
+ # Creating File System Table
+ We will generate an **fstab** file using the `genfstab` command. This will create an fstab file in the `/mnt/etc` directory based on the current mounted file systems and devices.
+ ```
+ genfstab -U /mnt > /mnt/etc/fstab
+ ```
+ You can go ahead and verify that the fstab file has been successfully generated under `/mnt/etc/fstab` by running the following command:
+ ```
+ cat /mnt/etc/fstab
+ ```
+
+ # Switching Enviroments
+ We will switch to the **chroot** environment using the `arch-chroot` command, with the root directory set to `/mnt`.
+ ```
+ arch-chroot /mnt
+ ```
+
+ ## Configuring Region & City
+ We will create a symbolic link between the specified time zone file located in `/usr/share/zoneinfo/<Region>/<City>` and the `/etc/localtime` file. The `-s` option specifies that the link should be symbolic, while the `-f` option forces the creation of a new link even if one already exists.
+ 
+ ```
+ ln -sf /usr/share/zoneinfo/<Region>/<City> /etc/localtime
+ ```
+
+ - NOTE: If you don't know your Region and City, you can run the `timedatectl list-timezones` command.
+
+ ## Set Current System Time
+ Setting the hardware clock on the system to the current system time.
+ ```
+ hwclock --systohc
+ ```
+
+ ## Neovim Installation
+ We need to install a text editor such as **Neovim** to edit different files.
+ ```
+ pacman -S neovim
+ ```
+
+ ## Uncommenting Locale
+ We need to open the `/etc/locale.gen` file with **Neovim** and uncomment the locale. By uncommenting the locale you use, you are enabling that specific locale for your system, which ensures that your system uses the correct language and character encoding settings.
+
+ - NOTE: For this example, I'm going to use `en_US.UTF-8 UTF-8` as my locale
+
+ ```
+ nvim /etc/locale.gen
+ ```
+
+ After uncommenting the locale, we must run the `locale-gen` command to apply the changes.
+
+ ```
+ locale-gen
+ ```
+
+ After the locale has been generated, we need to edit the `locale.conf` file located in `/etc/locale.conf`. Here we are going to copy the exact same local we've uncommented earlier. Keep in mind that this file specifies the system-wide locale settings. For this example, I'm going to add `LANG=en_US.UTF-8` to the `locale.conf` file.
+
+ ```
+ echo "LANG=en_US.UTF-8" > /etc/locale.conf
+ ```
+
+ ## Network Configuration
+
